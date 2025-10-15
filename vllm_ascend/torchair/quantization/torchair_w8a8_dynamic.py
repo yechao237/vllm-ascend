@@ -245,10 +245,7 @@ def torchair_fused_experts_with_mc2(
 
     enable_dispatch_v2 = hasattr(torch_npu, "npu_moe_distribute_dispatch_v2")
 
-    if (expert_map is not None):
-        moe_expert_num = len(expert_map) + global_redundant_expert_num
-    else:
-        moe_expert_num = global_redundant_expert_num
+    moe_expert_num = len(expert_map)
     # hidden_states = hidden_states.bfloat16()
     kwargs_mc2 = {
         "x": hidden_states,
@@ -431,7 +428,7 @@ def torchair_fused_experts_with_all2all(
 
     if expert_map is not None:
         assert ep_group is not None, "ep_group must be provided when expert_map is given"
-        global_num_experts = len(expert_map) + global_redundant_expert_num
+        global_num_experts = len(expert_map)
         if hasattr(torch_npu, "npu_moe_init_routing_quant"):
             quantized_tokens, expanded_row_idx, global_expert_tokens, _, token_scales = torch_npu.npu_moe_init_routing_quant(
                 hidden_states,
@@ -928,8 +925,6 @@ class TorchairAscendW8A8DynamicFusedMoEMethod:
         dynamic_scale_for_share: Optional[Any] = None,
         **kwargs,
     ) -> torch.Tensor:
-        assert router_logits.shape[
-            1] == global_num_experts, "Number of global experts mismatch"
 
         is_deepseek_v3_r1 = global_num_experts == 256
 
