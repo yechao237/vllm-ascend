@@ -1039,9 +1039,11 @@ class TorchairAscendFusedMoE(FusedMoE):
                 self.expert_map_path) and os.access(self.expert_map_path,
                                                     os.R_OK):
             self.expert_load_balancer = ExpertLoadBalancer(
-                self.expert_map_path, self.global_num_experts)
+                self.expert_map_path)
             self.global_redundant_expert_num = (
-                self.expert_load_balancer.get_global_redundant_expert_num())
+                self.expert_load_balancer.get_global_redundant_expert_num(num_experts))
+            self.global_num_experts = num_experts + self.global_redundant_expert_num
+            self.expert_load_balancer.set_global_expert_num(self.global_num_experts)
             try:
                 self.local_num_experts, self.expert_map = (
                     self.expert_load_balancer.get_rank_placement_map(
@@ -1191,6 +1193,7 @@ class TorchairAscendFusedMoE(FusedMoE):
         quantized_x_for_share, dynamic_scale_for_share = None, None
         from vllm_ascend.torchair.quantization.torchair_w8a8_dynamic import \
             TorchairAscendW8A8DynamicFusedMoEMethod
+
         if self.multistream_overlap_shared_expert:
             if not self.rm_router_logits:
                 router_logits, _ = gate(hidden_states)
